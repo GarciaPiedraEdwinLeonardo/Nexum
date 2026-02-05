@@ -1,1 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 @import "tailwindcss";
+
+/* Configuración de tema para Tailwind v4 */
+@theme {
+  /* Colores de Nexum */
+  --color-nexum-primary: #7a1e2d;
+  --color-nexum-base: #ffffff;
+  --color-nexum-dark: #2e2e2e;
+  --color-nexum-light: #f2f2f2;
+  --color-nexum-accent: #1f3a5f;
+  --color-nexum-success: #2e7d32;
+
+  /* Tipografía */
+  --font-sans: 'Barlow', system-ui, sans-serif;
+}
+
+/* Estilos base */
+body {
+  font-family: var(--font-sans);
+  color: var(--color-nexum-dark);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+}
+
+/* Componentes personalizados */
+@layer components {
+  .btn-primary {
+    background-color: var(--color-nexum-primary);
+    color: white;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: all 200ms;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  }
+  
+  .btn-primary:hover {
+    background-color: #621823;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  }
+  
+  .input-field {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-nexum-light);
+    border-radius: 0.5rem;
+    transition: border-color 200ms;
+    color: var(--color-nexum-dark);
+  }
+  
+  .input-field:focus {
+    outline: none;
+    border-color: var(--color-nexum-primary);
+  }
+  
+  .card {
+    background-color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  }
+  
+  .link-accent {
+    color: var(--color-nexum-accent);
+    transition: color 200ms;
+  }
+  
+  .link-accent:hover {
+    color: var(--color-nexum-primary);
+  }
+}
