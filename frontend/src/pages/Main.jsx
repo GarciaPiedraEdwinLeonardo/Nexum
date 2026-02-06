@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import logomain from '../assets/logo-main.png';
+import logoNexum from '../assets/logo-nexum.png';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 
 function Main() {
@@ -57,17 +58,14 @@ function Main() {
                     </div>
                 </div>
                 <div className="relative z-10 text-sm" style={{ color: 'rgba(46, 46, 46, 0.5)' }}>
-                    <p>© 2026 Nexum. Vinculación académica-laboral.</p>
+                    <p>© 2026 Nexum. Todos los derechos reservados.</p>
                 </div>
             </aside>
             <main className="flex-1 flex items-center justify-center p-8" style={{ backgroundColor: '#7A1E2D' }}>
                 <div className="w-full max-w-md">
                     <div className="lg:hidden mb-8 text-center">
-                        <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-xl shadow-lg">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#7A1E2D' }}>
-                                <span className="text-xl font-bold text-white">N</span>
-                            </div>
-                            <h1 className="text-2xl font-bold" style={{ color: '#2E2E2E' }}>Nexum</h1>
+                        <div className="w-full bg-white rounded-3xl shadow-2xl p-6 flex items-center justify-center">
+                            <img src={logoNexum} alt="Nexum Logo" className="h-24 object-contain" />
                         </div>
                     </div>
 
