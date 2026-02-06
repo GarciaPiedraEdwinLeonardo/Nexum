@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import logomain from '../assets/logo-main.png';
 import logoNexum from '../assets/logo-nexum.png';
-import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
+import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineMail, AiOutlineLock } from 'react-icons/ai';
 
 function Main() {
     const [formData, setFormData] = useState({
@@ -9,6 +9,9 @@ function Main() {
         password: ''
     });
     const [showPassword, setShowPassword] = useState(false);
+    const [isFormHovered, setIsFormHovered] = useState(false);
+    const [activeField, setActiveField] = useState(null);
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -61,26 +64,48 @@ function Main() {
                     <p>© 2026 Nexum. Todos los derechos reservados.</p>
                 </div>
             </aside>
-            <main className="flex-1 flex items-center justify-center p-8" style={{ backgroundColor: '#7A1E2D' }}>
-                <div className="w-full max-w-md">
+            <main className="flex-1 flex items-center justify-center p-8 relative overflow-hidden" style={{ backgroundColor: '#7A1E2D' }}>
+                {/* Efectos de fondo sutiles */}
+                <div className="absolute inset-0 opacity-5">
+                    <div className="absolute top-1/4 -left-24 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: '#FFFFFF' }}></div>
+                    <div className="absolute bottom-1/4 -right-24 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: '#FFFFFF' }}></div>
+                </div>
+
+                <div className="w-full max-w-md relative z-10">
                     <div className="lg:hidden mb-8 text-center">
                         <div className="w-full bg-white rounded-3xl shadow-2xl p-6 flex items-center justify-center">
                             <img src={logoNexum} alt="Nexum Logo" className="h-24 object-contain" />
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-3xl shadow-2xl p-10">
+                    <div
+                        className="bg-white rounded-3xl shadow-2xl p-10 relative overflow-hidden transition-all duration-300 ease-out"
+                        style={{
+                            transform: isFormHovered ? 'translateY(-2px)' : 'translateY(0)',
+                            boxShadow: isFormHovered
+                                ? '0 25px 50px -12px rgba(122, 30, 45, 0.25)'
+                                : '0 20px 25px -5px rgba(122, 30, 45, 0.15)'
+                        }}
+                        onMouseEnter={() => setIsFormHovered(true)}
+                        onMouseLeave={() => setIsFormHovered(false)}
+                    >
+                        {/* Barra superior sutil */}
+                        <div
+                            className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl"
+                            style={{ backgroundColor: '#7A1E2D' }}
+                        ></div>
+
                         <div className="mb-10 text-center">
                             <h2 className="text-4xl font-bold mb-3" style={{ color: '#7A1E2D' }}>
                                 Iniciar Sesión
                             </h2>
-                            <p className="text-base" style={{ color: 'rgba(46, 46, 46, 0.6)' }}>
+                            <p className="text-base mt-2" style={{ color: 'rgba(46, 46, 46, 0.6)' }}>
                                 Ingresa tus credenciales para acceder a la plataforma
                             </p>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            <div>
+                            <div className="transition-all duration-200">
                                 <label
                                     htmlFor="email"
                                     className="block text-sm font-semibold mb-3"
@@ -88,32 +113,44 @@ function Main() {
                                 >
                                     Correo Electrónico
                                 </label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    placeholder="ejemplo@correo.com"
-                                    required
-                                    className="w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-300 text-base"
-                                    style={{
-                                        borderColor: '#F2F2F2',
-                                        color: '#2E2E2E',
-                                        backgroundColor: '#FAFAFA'
-                                    }}
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = '#7A1E2D';
-                                        e.target.style.backgroundColor = '#FFFFFF';
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = '#F2F2F2';
-                                        e.target.style.backgroundColor = '#FAFAFA';
-                                    }}
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        placeholder="ejemplo@correo.com"
+                                        required
+                                        className="w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
+                                        style={{
+                                            borderColor: '#E8E8E8',
+                                            color: '#2E2E2E',
+                                            backgroundColor: '#FFFFFF',
+                                            boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)'
+                                        }}
+                                        onFocus={(e) => {
+                                            setActiveField('email');
+                                            e.target.style.borderColor = '#7A1E2D';
+                                            e.target.style.boxShadow = '0 0 0 3px rgba(122, 30, 45, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.03)';
+                                        }}
+                                        onBlur={(e) => {
+                                            setActiveField(null);
+                                            e.target.style.borderColor = '#E8E8E8';
+                                            e.target.style.boxShadow = 'inset 0 1px 2px rgba(0, 0, 0, 0.03)';
+                                        }}
+                                    />
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200"
+                                        style={{
+                                            color: activeField === 'email' ? '#7A1E2D' : '#666666',
+                                            opacity: activeField === 'email' ? 1 : 0.8
+                                        }}>
+                                        <AiOutlineMail className="h-5 w-5" />
+                                    </div>
+                                </div>
                             </div>
 
-                            <div>
+                            <div className="transition-all duration-200">
                                 <div className="flex items-center justify-between mb-3">
                                     <label
                                         htmlFor="password"
@@ -141,75 +178,93 @@ function Main() {
                                         onChange={handleInputChange}
                                         placeholder="••••••••"
                                         required
-                                        className="w-full px-5 py-4 pr-12 border-2 rounded-xl focus:outline-none transition-all duration-300 text-base"
+                                        className="w-full px-5 py-4 pr-12 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
                                         style={{
-                                            borderColor: '#F2F2F2',
+                                            borderColor: '#E8E8E8',
                                             color: '#2E2E2E',
-                                            backgroundColor: '#FAFAFA'
+                                            backgroundColor: '#FFFFFF',
+                                            boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)'
                                         }}
                                         onFocus={(e) => {
+                                            setActiveField('password');
                                             e.target.style.borderColor = '#7A1E2D';
-                                            e.target.style.backgroundColor = '#FFFFFF';
+                                            e.target.style.boxShadow = '0 0 0 3px rgba(122, 30, 45, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.03)';
                                         }}
                                         onBlur={(e) => {
-                                            e.target.style.borderColor = '#F2F2F2';
-                                            e.target.style.backgroundColor = '#FAFAFA';
+                                            setActiveField(null);
+                                            e.target.style.borderColor = '#E8E8E8';
+                                            e.target.style.boxShadow = 'inset 0 1px 2px rgba(0, 0, 0, 0.03)';
                                         }}
                                     />
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200"
+                                        style={{
+                                            color: activeField === 'password' ? '#7A1E2D' : '#666666',
+                                            opacity: activeField === 'password' ? 1 : 0.8
+                                        }}>
+                                        <AiOutlineLock className="h-5 w-5" />
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors duration-200"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors duration-200 p-1 rounded-md hover:bg-gray-50"
                                         style={{ color: '#7A1E2D' }}
-                                        onMouseEnter={(e) => e.target.style.color = '#621823'}
-                                        onMouseLeave={(e) => e.target.style.color = '#7A1E2D'}
                                     >
                                         {showPassword ? (
-                                            <AiOutlineEyeInvisible size={24} />
+                                            <AiOutlineEyeInvisible size={20} />
                                         ) : (
-                                            <AiOutlineEye size={24} />
+                                            <AiOutlineEye size={20} />
                                         )}
                                     </button>
                                 </div>
                             </div>
 
-                            <button
-                                type="submit"
-                                className="w-full text-white font-semibold py-4 rounded-xl transition-all duration-300 shadow-lg text-base mt-8"
-                                style={{ backgroundColor: '#7A1E2D' }}
-                                onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = '#621823';
-                                    e.target.style.boxShadow = '0 20px 25px -5px rgba(122, 30, 45, 0.3)';
-                                    e.target.style.transform = 'translateY(-2px)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = '#7A1E2D';
-                                    e.target.style.boxShadow = '0 10px 15px -3px rgba(122, 30, 45, 0.2)';
-                                    e.target.style.transform = 'translateY(0)';
-                                }}
-                            >
-                                Iniciar Sesión
-                            </button>
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    className="w-full text-white font-semibold py-4 rounded-xl transition-all duration-300 text-base relative overflow-hidden"
+                                    style={{
+                                        backgroundColor: '#7A1E2D',
+                                        boxShadow: '0 4px 12px rgba(122, 30, 45, 0.2)'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.backgroundColor = '#621823';
+                                        e.target.style.boxShadow = '0 6px 16px rgba(122, 30, 45, 0.3)';
+                                        e.target.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.backgroundColor = '#7A1E2D';
+                                        e.target.style.boxShadow = '0 4px 12px rgba(122, 30, 45, 0.2)';
+                                        e.target.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    Iniciar Sesión
+                                </button>
+                            </div>
                         </form>
 
-                        <div className="mt-8 text-center">
-                            <p className="text-sm" style={{ color: 'rgba(46, 46, 46, 0.6)' }}>
-                                ¿No tienes una cuenta?{' '}
-                                <a
-                                    href="#"
-                                    className="font-semibold transition-colors duration-200"
-                                    style={{ color: '#7A1E2D' }}
-                                    onMouseEnter={(e) => e.target.style.color = '#621823'}
-                                    onMouseLeave={(e) => e.target.style.color = '#7A1E2D'}
-                                >
-                                    Regístrate aquí
-                                </a>
+                        <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                            <p className="text-sm mb-4" style={{ color: 'rgba(46, 46, 46, 0.6)' }}>
+                                ¿No tienes una cuenta?
                             </p>
+                            <a
+                                href="#"
+                                className="inline-flex items-center justify-center font-semibold transition-all duration-300 py-3 px-6 rounded-xl border"
+                                style={{
+                                    color: '#7A1E2D',
+                                    borderColor: '#E8E8E8'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.borderColor = '#7A1E2D';
+                                    e.target.style.color = '#621823';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.borderColor = '#E8E8E8';
+                                    e.target.style.color = '#7A1E2D';
+                                }}
+                            >
+                                Regístrate aquí
+                            </a>
                         </div>
-                    </div>
-
-                    <div className="mt-6 text-center text-xs" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                        <p>Al continuar, aceptas nuestros Términos y Condiciones</p>
                     </div>
                 </div>
             </main>
