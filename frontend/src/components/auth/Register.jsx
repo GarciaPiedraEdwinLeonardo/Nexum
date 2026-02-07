@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineMail, AiOutlineLock, AiOutlineUser } from 'react-icons/ai';
 
-function Register({ onSwitchToLogin }) {
+function Register({ onSwitchToLogin, onRegisterSuccess }) {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -28,7 +28,12 @@ function Register({ onSwitchToLogin }) {
             return;
         }
         console.log('Register attempt:', formData);
+
         // Lógica de registro
+        // Después de un registro exitoso, navegar a verificación de email
+        if (onRegisterSuccess) {
+            onRegisterSuccess(formData.email);
+        }
     };
 
     return (

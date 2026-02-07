@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logomain from '../assets/logo-main.png';
 import logoNexum from '../assets/logo-nexum.png';
 import Login from '../components/auth/Login';
 import Register from '../components/auth/Register';
 import ForgotPassword from '../components/auth/ForgotPassword';
+import VerifyEmail from '../components/auth/VerifyEmail';
 
 function Main({ view = 'login' }) {
     const navigate = useNavigate();
+    const location = useLocation();
     const [currentView, setCurrentView] = useState(view);
+    const [userEmail, setUserEmail] = useState(location.state?.email || '');
 
     // Sincronizar el estado local con la prop view cuando cambie la ruta
     useEffect(() => {
@@ -25,6 +28,16 @@ function Main({ view = 'login' }) {
 
     const handleSwitchToForgotPassword = () => {
         navigate('/forgot-password');
+    };
+
+    const handleRegisterSuccess = (email) => {
+        setUserEmail(email);
+        navigate('/verify-email', { state: { email } });
+    };
+
+    const handleResendEmail = (email) => {
+        console.log('Reenviando email a:', email);
+        // Aquí va tu lógica para reenviar el email de verificación
     };
 
     return (
@@ -86,13 +99,25 @@ function Main({ view = 'login' }) {
                         </div>
                     </div>
 
-                    {/* Renderizar Login o Register según la vista */}
+                    {/* Renderizar Login, Register, ForgotPassword o VerifyEmail según la vista */}
                     {currentView === 'login' ? (
-                        <Login onSwitchToRegister={handleSwitchToRegister} onSwitchToForgotPassword={handleSwitchToForgotPassword} />
+                        <Login
+                            onSwitchToRegister={handleSwitchToRegister}
+                            onSwitchToForgotPassword={handleSwitchToForgotPassword}
+                        />
                     ) : currentView === 'register' ? (
-                        <Register onSwitchToLogin={handleSwitchToLogin} />
+                        <Register
+                            onSwitchToLogin={handleSwitchToLogin}
+                            onRegisterSuccess={handleRegisterSuccess}
+                        />
                     ) : currentView === 'forgot-password' ? (
                         <ForgotPassword onBackToLogin={handleSwitchToLogin} />
+                    ) : currentView === 'verify-email' ? (
+                        <VerifyEmail
+                            email={userEmail || location.state?.email || 'tu@correo.com'}
+                            onBackToLogin={handleSwitchToLogin}
+                            onResendEmail={handleResendEmail}
+                        />
                     ) : null}
                 </div>
             </main>

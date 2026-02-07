@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Main from "./pages/Main";
+import EmailConfirmed from "./components/auth/EmailConfirmed";
 
 function App() {
   return (
@@ -12,6 +13,10 @@ function App() {
         <Route path="/login" element={<Main view="login" />} />
         <Route path="/register" element={<Main view="register" />} />
         <Route path="/forgot-password" element={<Main view="forgot-password" />} />
+        <Route path="/verify-email" element={<Main view="verify-email" />} />
+
+        {/* Ruta de confirmación de email (con token) */}
+        <Route path="/confirm-email" element={<EmailConfirmed />} />
 
         {/* Ruta para manejar páginas no encontradas */}
         <Route path="*" element={<Navigate to="/login" replace />} />
