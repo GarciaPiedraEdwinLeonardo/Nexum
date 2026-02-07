@@ -11,6 +11,7 @@ function App() {
         {/* Rutas de autenticación */}
         <Route path="/login" element={<Main view="login" />} />
         <Route path="/register" element={<Main view="register" />} />
+        <Route path="/forgot-password" element={<Main view="forgot-password" />} />
 
         {/* Ruta para manejar páginas no encontradas */}
         <Route path="*" element={<Navigate to="/login" replace />} />

@@ -1,29 +1,99 @@
 import { useState } from 'react';
-import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineMail, AiOutlineLock } from 'react-icons/ai';
+import { AiOutlineMail, AiOutlineCheckCircle } from 'react-icons/ai';
 
-function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
-    const [formData, setFormData] = useState({
-        email: '',
-        password: ''
-    });
-    const [showPassword, setShowPassword] = useState(false);
+function ForgotPassword({ onBackToLogin }) {
+    const [email, setEmail] = useState('');
+    const [isSubmitted, setIsSubmitted] = useState(false);
     const [isFormHovered, setIsFormHovered] = useState(false);
     const [activeField, setActiveField] = useState(null);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('Login attempt:', formData);
-        // Lógica de autenticación
+        console.log('Password reset requested for:', email);
+        // Aquí iría la lógica para enviar el email de recuperación
+        setIsSubmitted(true);
     };
 
+    // Si ya se envió el email, mostrar mensaje de confirmación
+    if (isSubmitted) {
+        return (
+            <div
+                className="bg-white rounded-3xl shadow-2xl p-10 relative overflow-hidden transition-all duration-300 ease-out"
+                style={{
+                    transform: isFormHovered ? 'translateY(-2px)' : 'translateY(0)',
+                    boxShadow: isFormHovered
+                        ? '0 25px 50px -12px rgba(122, 30, 45, 0.25)'
+                        : '0 20px 25px -5px rgba(122, 30, 45, 0.15)'
+                }}
+                onMouseEnter={() => setIsFormHovered(true)}
+                onMouseLeave={() => setIsFormHovered(false)}
+            >
+                {/* Barra superior sutil */}
+                <div
+                    className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl"
+                    style={{ backgroundColor: '#2E7D32' }}
+                ></div>
+
+                <div className="text-center py-8">
+                    {/* Ícono de éxito */}
+                    <div className="flex justify-center mb-6">
+                        <div
+                            className="w-20 h-20 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: 'rgba(46, 125, 50, 0.1)' }}
+                        >
+                            <AiOutlineCheckCircle size={48} style={{ color: '#2E7D32' }} />
+                        </div>
+                    </div>
+
+                    <h2 className="text-3xl font-bold mb-4" style={{ color: '#2E7D32' }}>
+                        ¡Correo Enviado!
+                    </h2>
+
+                    <p className="text-base mb-6" style={{ color: 'rgba(46, 46, 46, 0.7)' }}>
+                        Hemos enviado un enlace de recuperación a:
+                    </p>
+
+                    <p className="text-lg font-semibold mb-8" style={{ color: '#7A1E2D' }}>
+                        {email}
+                    </p>
+
+                    <div
+                        className="rounded-xl p-4 mb-8"
+                        style={{ backgroundColor: '#F2F2F2' }}
+                    >
+                        <p className="text-sm" style={{ color: 'rgba(46, 46, 46, 0.8)' }}>
+                            Por favor, revisa tu bandeja de entrada y sigue las instrucciones para restablecer tu contraseña.
+                            Si no ves el correo, revisa tu carpeta de spam.
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={onBackToLogin}
+                        className="w-full font-semibold py-4 rounded-xl transition-all duration-300 text-base"
+                        style={{
+                            backgroundColor: '#7A1E2D',
+                            color: 'white',
+                            boxShadow: '0 4px 12px rgba(122, 30, 45, 0.2)'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#621823';
+                            e.target.style.boxShadow = '0 6px 16px rgba(122, 30, 45, 0.3)';
+                            e.target.style.transform = 'translateY(-1px)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = '#7A1E2D';
+                            e.target.style.boxShadow = '0 4px 12px rgba(122, 30, 45, 0.2)';
+                            e.target.style.transform = 'translateY(0)';
+                        }}
+                    >
+                        Volver al Inicio de Sesión
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Formulario de recuperación
     return (
         <div
             className="bg-white rounded-3xl shadow-2xl p-10 relative overflow-hidden transition-all duration-300 ease-out"
@@ -44,10 +114,10 @@ function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
 
             <div className="mb-10 text-center">
                 <h2 className="text-4xl font-bold mb-3" style={{ color: '#7A1E2D' }}>
-                    Iniciar Sesión
+                    Recuperar Contraseña
                 </h2>
                 <p className="text-base mt-2" style={{ color: 'rgba(46, 46, 46, 0.6)' }}>
-                    Ingresa tus credenciales para acceder a la plataforma
+                    Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña
                 </p>
             </div>
 
@@ -65,8 +135,8 @@ function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
                             type="email"
                             id="email"
                             name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             placeholder="ejemplo@correo.com"
                             required
                             className="w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
@@ -87,82 +157,15 @@ function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
                                 e.target.style.boxShadow = 'inset 0 1px 2px rgba(0, 0, 0, 0.03)';
                             }}
                         />
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200"
+                        <div
+                            className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200"
                             style={{
                                 color: activeField === 'email' ? '#7A1E2D' : '#666666',
                                 opacity: activeField === 'email' ? 1 : 0.8
-                            }}>
+                            }}
+                        >
                             <AiOutlineMail className="h-5 w-5" />
                         </div>
-                    </div>
-                </div>
-
-                <div className="transition-all duration-200">
-                    <div className="flex items-center justify-between mb-3">
-                        <label
-                            htmlFor="password"
-                            className="block text-sm font-semibold"
-                            style={{ color: '#2E2E2E' }}
-                        >
-                            Contraseña
-                        </label>
-                        <button
-                            type='button'
-                            onClick={onSwitchToForgotPassword}
-                            className="text-sm font-medium transition-colors duration-200"
-                            style={{ color: '#7A1E2D' }}
-                            onMouseEnter={(e) => e.target.style.color = '#621823'}
-                            onMouseLeave={(e) => e.target.style.color = '#7A1E2D'}
-                        >
-                            ¿Olvidaste tu contraseña?
-                        </button>
-                    </div>
-                    <div className="relative">
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            id="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleInputChange}
-                            placeholder="••••••••"
-                            required
-                            className="w-full px-5 py-4 pr-12 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
-                            style={{
-                                borderColor: '#E8E8E8',
-                                color: '#2E2E2E',
-                                backgroundColor: '#FFFFFF',
-                                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)'
-                            }}
-                            onFocus={(e) => {
-                                setActiveField('password');
-                                e.target.style.borderColor = '#7A1E2D';
-                                e.target.style.boxShadow = '0 0 0 3px rgba(122, 30, 45, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.03)';
-                            }}
-                            onBlur={(e) => {
-                                setActiveField(null);
-                                e.target.style.borderColor = '#E8E8E8';
-                                e.target.style.boxShadow = 'inset 0 1px 2px rgba(0, 0, 0, 0.03)';
-                            }}
-                        />
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200"
-                            style={{
-                                color: activeField === 'password' ? '#7A1E2D' : '#666666',
-                                opacity: activeField === 'password' ? 1 : 0.8
-                            }}>
-                            <AiOutlineLock className="h-5 w-5" />
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors duration-200 p-1 rounded-md hover:bg-gray-50"
-                            style={{ color: '#7A1E2D' }}
-                        >
-                            {showPassword ? (
-                                <AiOutlineEyeInvisible size={20} />
-                            ) : (
-                                <AiOutlineEye size={20} />
-                            )}
-                        </button>
                     </div>
                 </div>
 
@@ -185,17 +188,17 @@ function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
                             e.target.style.transform = 'translateY(0)';
                         }}
                     >
-                        Iniciar Sesión
+                        Enviar Enlace de Recuperación
                     </button>
                 </div>
             </form>
 
             <div className="mt-8 pt-6 border-t border-gray-100 text-center">
                 <p className="text-sm mb-4" style={{ color: 'rgba(46, 46, 46, 0.6)' }}>
-                    ¿No tienes una cuenta?
+                    ¿Recordaste tu contraseña?
                 </p>
                 <button
-                    onClick={onSwitchToRegister}
+                    onClick={onBackToLogin}
                     className="inline-flex items-center justify-center font-semibold transition-all duration-300 py-3 px-6 rounded-xl border"
                     style={{
                         color: '#7A1E2D',
@@ -210,11 +213,11 @@ function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
                         e.target.style.color = '#7A1E2D';
                     }}
                 >
-                    Regístrate aquí
+                    Volver al Inicio de Sesión
                 </button>
             </div>
         </div>
     );
 }
 
-export default Login;
+export default ForgotPassword;

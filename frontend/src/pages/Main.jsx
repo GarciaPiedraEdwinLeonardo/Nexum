@@ -4,6 +4,7 @@ import logomain from '../assets/logo-main.png';
 import logoNexum from '../assets/logo-nexum.png';
 import Login from '../components/auth/Login';
 import Register from '../components/auth/Register';
+import ForgotPassword from '../components/auth/ForgotPassword';
 
 function Main({ view = 'login' }) {
     const navigate = useNavigate();
@@ -20,6 +21,10 @@ function Main({ view = 'login' }) {
 
     const handleSwitchToLogin = () => {
         navigate('/login');
+    };
+
+    const handleSwitchToForgotPassword = () => {
+        navigate('/forgot-password');
     };
 
     return (
@@ -83,10 +88,12 @@ function Main({ view = 'login' }) {
 
                     {/* Renderizar Login o Register según la vista */}
                     {currentView === 'login' ? (
-                        <Login onSwitchToRegister={handleSwitchToRegister} />
-                    ) : (
+                        <Login onSwitchToRegister={handleSwitchToRegister} onSwitchToForgotPassword={handleSwitchToForgotPassword} />
+                    ) : currentView === 'register' ? (
                         <Register onSwitchToLogin={handleSwitchToLogin} />
-                    )}
+                    ) : currentView === 'forgot-password' ? (
+                        <ForgotPassword onBackToLogin={handleSwitchToLogin} />
+                    ) : null}
                 </div>
             </main>
         </div>
