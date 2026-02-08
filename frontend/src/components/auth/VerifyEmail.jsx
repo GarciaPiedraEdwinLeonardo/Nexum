@@ -123,7 +123,7 @@ function VerifyEmail({ email, onBackToLogin, onResendEmail }) {
                     style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', borderLeft: '4px solid #FFC107' }}
                 >
                     <p className="text-sm text-left" style={{ color: 'rgba(46, 46, 46, 0.8)' }}>
-                        <strong>💡 Tip:</strong> Si no encuentras el correo, revisa tu carpeta de spam o correo no deseado.
+                        <strong>Tip:</strong> Si no encuentras el correo, revisa tu carpeta de spam o correo no deseado.
                     </p>
                 </div>
 
@@ -177,28 +177,6 @@ function VerifyEmail({ email, onBackToLogin, onResendEmail }) {
                         )}
                     </button>
                 </div>
-
-                {/* Botón para volver al login */}
-                <button
-                    onClick={onBackToLogin}
-                    className="w-full text-white font-semibold py-4 rounded-xl transition-all duration-300 text-base"
-                    style={{
-                        backgroundColor: '#7A1E2D',
-                        boxShadow: '0 4px 12px rgba(122, 30, 45, 0.2)'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = '#621823';
-                        e.target.style.boxShadow = '0 6px 16px rgba(122, 30, 45, 0.3)';
-                        e.target.style.transform = 'translateY(-1px)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = '#7A1E2D';
-                        e.target.style.boxShadow = '0 4px 12px rgba(122, 30, 45, 0.2)';
-                        e.target.style.transform = 'translateY(0)';
-                    }}
-                >
-                    Ir al Inicio de Sesión
-                </button>
 
                 <p className="text-xs mt-6" style={{ color: 'rgba(46, 46, 46, 0.5)' }}>
                     El enlace de verificación es válido por 24 horas

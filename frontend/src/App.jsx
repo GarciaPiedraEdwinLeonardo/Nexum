@@ -16,7 +16,7 @@ function App() {
         <Route path="/verify-email" element={<Main view="verify-email" />} />
 
         {/* Ruta de confirmación de email (con token) */}
-        <Route path="/confirm-email" element={<EmailConfirmed />} />
+        <Route path="/confirm-email/:token" element={<EmailConfirmed />} />
 
         {/* Ruta para manejar páginas no encontradas */}
         <Route path="*" element={<Navigate to="/login" replace />} />
