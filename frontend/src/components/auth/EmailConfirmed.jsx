@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AiOutlineCheckCircle, AiOutlineCloseCircle, AiOutlineLoading3Quarters } from 'react-icons/ai';
+import authService from '../../services/authService';
 
 function EmailConfirmed() {
     const { token } = useParams();
@@ -28,57 +29,23 @@ function EmailConfirmed() {
 
     const verifyEmailToken = async () => {
         try {
-            // AQUÍ VA TU LLAMADA A LA API
-            // Ejemplo de integración:
-            /*
-            const response = await fetch(`/api/auth/verify-email/${token}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
+            // Llamar al servicio de verificación de email
+            const response = await authService.verifyEmail(token);
 
-            const data = await response.json();
-
-            if (response.ok) {
-                // Guardar el token de autenticación
-                localStorage.setItem('authToken', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-                
-                setStatus('success');
-            } else {
-                setStatus('error');
-                setErrorMessage(data.message || 'Token inválido o expirado');
-            }
-            */
-
-            // SIMULACIÓN PARA DESARROLLO (eliminar cuando integres el backend)
-            console.log('Verificando token:', token);
-
-            // Simular llamada a API
-            setTimeout(() => {
-                // Simular respuesta exitosa (cambiar a error para probar)
-                const isValid = true; // Cambiar a false para simular error
-
-                if (isValid) {
-                    // Simular guardado de token de autenticación
-                    localStorage.setItem('authToken', 'fake-jwt-token-12345');
-                    localStorage.setItem('user', JSON.stringify({
-                        id: '1',
-                        name: 'Usuario de Prueba',
-                        email: 'usuario@ejemplo.com',
-                        verified: true
-                    }));
-
-                    setStatus('success');
-                } else {
-                    setStatus('error');
-                    setErrorMessage('El enlace de verificación es inválido o ha expirado');
-                }
-            }, 2000); // Simular latencia de red
+            console.log('Email verificado exitosamente:', response);
+            setStatus('success');
 
         } catch (error) {
             console.error('Error al verificar email:', error);
             setStatus('error');
-            setErrorMessage('Ocurrió un error al verificar tu email. Por favor, intenta nuevamente.');
+
+            if (error.message === 'Network Error') {
+                setErrorMessage('No se pudo conectar con el servidor. Verifica tu conexión.');
+            } else if (error.message) {
+                setErrorMessage(error.message);
+            } else {
+                setErrorMessage('El enlace de verificación es inválido o ha expirado');
+            }
         }
     };
 
@@ -96,7 +63,7 @@ function EmailConfirmed() {
     if (status === 'loading') {
         return (
             <div className="min-h-screen flex items-center justify-center p-8" style={{ backgroundColor: '#7A1E2D' }}>
-                <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center">
+                <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center relative">
                     {/* Barra superior */}
                     <div
                         className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl"
@@ -141,7 +108,7 @@ function EmailConfirmed() {
     if (status === 'success') {
         return (
             <div className="min-h-screen flex items-center justify-center p-8" style={{ backgroundColor: '#7A1E2D' }}>
-                <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center">
+                <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center relative">
                     {/* Barra superior verde */}
                     <div
                         className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl"
@@ -217,7 +184,7 @@ function EmailConfirmed() {
     if (status === 'error') {
         return (
             <div className="min-h-screen flex items-center justify-center p-8" style={{ backgroundColor: '#7A1E2D' }}>
-                <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center">
+                <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center relative">
                     {/* Barra superior roja */}
                     <div
                         className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl"

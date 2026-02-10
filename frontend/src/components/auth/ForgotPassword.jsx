@@ -1,17 +1,63 @@
 import { useState } from 'react';
 import { AiOutlineMail, AiOutlineCheckCircle } from 'react-icons/ai';
+import authService from '../../services/authService';
+import { validateEmail, MAX_EMAIL_LENGTH } from '../../utils/validators';
 
 function ForgotPassword({ onBackToLogin }) {
     const [email, setEmail] = useState('');
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isFormHovered, setIsFormHovered] = useState(false);
     const [activeField, setActiveField] = useState(null);
+    const [errors, setErrors] = useState({});
+    const [isLoading, setIsLoading] = useState(false);
+    const [apiError, setApiError] = useState('');
 
-    const handleSubmit = (e) => {
+    const validateForm = () => {
+        const newErrors = {};
+
+        const emailError = validateEmail(email);
+        if (emailError) {
+            newErrors.email = emailError;
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Password reset requested for:', email);
-        // Aquí iría la lógica para enviar el email de recuperación
-        setIsSubmitted(true);
+
+        // Limpiar errores previos
+        setApiError('');
+
+        // Validar formulario
+        if (!validateForm()) {
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            // Llamar al servicio de forgot password
+            await authService.forgotPassword(email);
+
+            console.log('Solicitud de recuperación enviada para:', email);
+            setIsSubmitted(true);
+
+        } catch (error) {
+            console.error('Error al solicitar recuperación:', error);
+
+            // Manejar diferentes tipos de errores
+            if (error.message === 'Network Error') {
+                setApiError('No se pudo conectar con el servidor. Verifica tu conexión.');
+            } else if (error.message) {
+                setApiError(error.message);
+            } else {
+                setApiError('Error al enviar el correo. Por favor, intenta nuevamente.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Si ya se envió el email, mostrar mensaje de confirmación
@@ -121,6 +167,21 @@ function ForgotPassword({ onBackToLogin }) {
                 </p>
             </div>
 
+            {/* Error general de la API */}
+            {apiError && (
+                <div
+                    className="mb-6 p-4 rounded-xl border-l-4"
+                    style={{
+                        backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                        borderColor: '#D32F2F'
+                    }}
+                >
+                    <p className="text-sm font-medium" style={{ color: '#D32F2F' }}>
+                        {apiError}
+                    </p>
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="transition-all duration-200">
                     <label
@@ -136,59 +197,90 @@ function ForgotPassword({ onBackToLogin }) {
                             id="email"
                             name="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value.length <= MAX_EMAIL_LENGTH) {
+                                    setEmail(value);
+                                    if (errors.email) {
+                                        setErrors({});
+                                    }
+                                    if (apiError) {
+                                        setApiError('');
+                                    }
+                                }
+                            }}
                             placeholder="ejemplo@correo.com"
-                            required
+                            maxLength={MAX_EMAIL_LENGTH}
+                            disabled={isLoading}
                             className="w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
                             style={{
-                                borderColor: '#E8E8E8',
+                                borderColor: errors.email ? '#D32F2F' : '#E8E8E8',
                                 color: '#2E2E2E',
-                                backgroundColor: '#FFFFFF',
-                                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)'
+                                backgroundColor: isLoading ? '#F5F5F5' : '#FFFFFF',
+                                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)',
+                                cursor: isLoading ? 'not-allowed' : 'text'
                             }}
                             onFocus={(e) => {
                                 setActiveField('email');
-                                e.target.style.borderColor = '#7A1E2D';
-                                e.target.style.boxShadow = '0 0 0 3px rgba(122, 30, 45, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.03)';
+                                e.target.style.borderColor = errors.email ? '#D32F2F' : '#7A1E2D';
+                                e.target.style.boxShadow = `0 0 0 3px ${errors.email ? 'rgba(211, 47, 47, 0.1)' : 'rgba(122, 30, 45, 0.1)'}, inset 0 1px 2px rgba(0, 0, 0, 0.03)`;
                             }}
                             onBlur={(e) => {
                                 setActiveField(null);
-                                e.target.style.borderColor = '#E8E8E8';
+                                e.target.style.borderColor = errors.email ? '#D32F2F' : '#E8E8E8';
                                 e.target.style.boxShadow = 'inset 0 1px 2px rgba(0, 0, 0, 0.03)';
                             }}
                         />
                         <div
                             className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200"
                             style={{
-                                color: activeField === 'email' ? '#7A1E2D' : '#666666',
+                                color: errors.email ? '#D32F2F' : (activeField === 'email' ? '#7A1E2D' : '#666666'),
                                 opacity: activeField === 'email' ? 1 : 0.8
                             }}
                         >
                             <AiOutlineMail className="h-5 w-5" />
                         </div>
                     </div>
+                    {errors.email && (
+                        <p className="mt-2 text-sm" style={{ color: '#D32F2F' }}>
+                            {errors.email}
+                        </p>
+                    )}
                 </div>
 
                 <div className="pt-2">
                     <button
                         type="submit"
-                        className="w-full text-white font-semibold py-4 rounded-xl transition-all duration-300 text-base relative overflow-hidden"
+                        disabled={isLoading}
+                        className="w-full text-white font-semibold py-4 rounded-xl transition-all duration-300 text-base relative overflow-hidden flex items-center justify-center"
                         style={{
-                            backgroundColor: '#7A1E2D',
-                            boxShadow: '0 4px 12px rgba(122, 30, 45, 0.2)'
+                            backgroundColor: isLoading ? '#A0A0A0' : '#7A1E2D',
+                            boxShadow: '0 4px 12px rgba(122, 30, 45, 0.2)',
+                            cursor: isLoading ? 'not-allowed' : 'pointer'
                         }}
                         onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#621823';
-                            e.target.style.boxShadow = '0 6px 16px rgba(122, 30, 45, 0.3)';
-                            e.target.style.transform = 'translateY(-1px)';
+                            if (!isLoading) {
+                                e.target.style.backgroundColor = '#621823';
+                                e.target.style.boxShadow = '0 6px 16px rgba(122, 30, 45, 0.3)';
+                                e.target.style.transform = 'translateY(-1px)';
+                            }
                         }}
                         onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#7A1E2D';
-                            e.target.style.boxShadow = '0 4px 12px rgba(122, 30, 45, 0.2)';
-                            e.target.style.transform = 'translateY(0)';
+                            if (!isLoading) {
+                                e.target.style.backgroundColor = '#7A1E2D';
+                                e.target.style.boxShadow = '0 4px 12px rgba(122, 30, 45, 0.2)';
+                                e.target.style.transform = 'translateY(0)';
+                            }
                         }}
                     >
-                        Enviar Enlace de Recuperación
+                        {isLoading ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                Enviando...
+                            </>
+                        ) : (
+                            'Enviar Enlace de Recuperación'
+                        )}
                     </button>
                 </div>
             </form>
@@ -199,18 +291,24 @@ function ForgotPassword({ onBackToLogin }) {
                 </p>
                 <button
                     onClick={onBackToLogin}
+                    disabled={isLoading}
                     className="inline-flex items-center justify-center font-semibold transition-all duration-300 py-3 px-6 rounded-xl border"
                     style={{
-                        color: '#7A1E2D',
-                        borderColor: '#E8E8E8'
+                        color: isLoading ? 'rgba(122, 30, 45, 0.5)' : '#7A1E2D',
+                        borderColor: '#E8E8E8',
+                        cursor: isLoading ? 'not-allowed' : 'pointer'
                     }}
                     onMouseEnter={(e) => {
-                        e.target.style.borderColor = '#7A1E2D';
-                        e.target.style.color = '#621823';
+                        if (!isLoading) {
+                            e.target.style.borderColor = '#7A1E2D';
+                            e.target.style.color = '#621823';
+                        }
                     }}
                     onMouseLeave={(e) => {
-                        e.target.style.borderColor = '#E8E8E8';
-                        e.target.style.color = '#7A1E2D';
+                        if (!isLoading) {
+                            e.target.style.borderColor = '#E8E8E8';
+                            e.target.style.color = '#7A1E2D';
+                        }
                     }}
                 >
                     Volver al Inicio de Sesión

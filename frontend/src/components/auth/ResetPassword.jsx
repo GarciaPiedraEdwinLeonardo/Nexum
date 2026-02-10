@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineLock, AiOutlineCheckCircle, AiOutlineCloseCircle, AiOutlineLoading3Quarters } from 'react-icons/ai';
 import authService from '../../services/authService';
+import { validatePassword, validateConfirmPassword, MAX_PASSWORD_LENGTH } from '../../utils/validators';
 
 function ResetPassword() {
     const { token } = useParams();
@@ -53,6 +54,18 @@ function ResetPassword() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+
+        // Limites de caracteres
+        const limits = {
+            password: MAX_PASSWORD_LENGTH,
+            confirmPassword: MAX_PASSWORD_LENGTH
+        };
+
+        // Si excede el límite, no actualizar
+        if (limits[name] && value.length > limits[name]) {
+            return;
+        }
+
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -76,19 +89,15 @@ function ResetPassword() {
         const newErrors = {};
 
         // Validar contraseña
-        if (!formData.password) {
-            newErrors.password = 'La contraseña es requerida';
-        } else if (formData.password.length < 8) {
-            newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
-        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-            newErrors.password = 'Debe contener mayúsculas, minúsculas y números';
+        const passwordError = validatePassword(formData.password);
+        if (passwordError) {
+            newErrors.password = passwordError;
         }
 
         // Validar confirmación
-        if (!formData.confirmPassword) {
-            newErrors.confirmPassword = 'Debes confirmar tu contraseña';
-        } else if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Las contraseñas no coinciden';
+        const confirmPasswordError = validateConfirmPassword(formData.password, formData.confirmPassword);
+        if (confirmPasswordError) {
+            newErrors.confirmPassword = confirmPasswordError;
         }
 
         setErrors(newErrors);
@@ -290,6 +299,7 @@ function ResetPassword() {
                                 value={formData.password}
                                 onChange={handleInputChange}
                                 placeholder="Mínimo 8 caracteres"
+                                maxLength={MAX_PASSWORD_LENGTH}
                                 disabled={isLoading}
                                 className="w-full px-5 py-4 pr-12 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
                                 style={{
@@ -345,6 +355,7 @@ function ResetPassword() {
                                 value={formData.confirmPassword}
                                 onChange={handleInputChange}
                                 placeholder="Repite tu contraseña"
+                                maxLength={MAX_PASSWORD_LENGTH}
                                 disabled={isLoading}
                                 className="w-full px-5 py-4 pr-12 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
                                 style={{

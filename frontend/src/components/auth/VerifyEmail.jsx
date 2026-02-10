@@ -1,20 +1,23 @@
 import { useState } from 'react';
 import { AiOutlineMail, AiOutlineCheckCircle, AiOutlineClockCircle } from 'react-icons/ai';
+import authService from '../../services/authService';
 
-function VerifyEmail({ email, onBackToLogin, onResendEmail }) {
+function VerifyEmail({ email, onResendEmail }) {
     const [isFormHovered, setIsFormHovered] = useState(false);
     const [isResending, setIsResending] = useState(false);
     const [resendSuccess, setResendSuccess] = useState(false);
+    const [resendError, setResendError] = useState('');
 
     const handleResendEmail = async () => {
         setIsResending(true);
+        setResendError('');
+        setResendSuccess(false);
 
-        // Aquí va tu lógica para reenviar el email
-        console.log('Reenviando email de verificación a:', email);
+        try {
+            // Llamar al servicio para reenviar email
+            await authService.resendVerificationEmail(email);
 
-        // Simular llamada a API
-        setTimeout(() => {
-            setIsResending(false);
+            console.log('Email de verificación reenviado a:', email);
             setResendSuccess(true);
 
             // Ocultar mensaje de éxito después de 3 segundos
@@ -25,7 +28,26 @@ function VerifyEmail({ email, onBackToLogin, onResendEmail }) {
             if (onResendEmail) {
                 onResendEmail(email);
             }
-        }, 1500);
+
+        } catch (error) {
+            console.error('Error al reenviar email:', error);
+
+            if (error.message === 'Network Error') {
+                setResendError('No se pudo conectar con el servidor. Verifica tu conexión.');
+            } else if (error.message) {
+                setResendError(error.message);
+            } else {
+                setResendError('Error al reenviar el correo. Por favor, intenta nuevamente.');
+            }
+
+            // Ocultar mensaje de error después de 5 segundos
+            setTimeout(() => {
+                setResendError('');
+            }, 5000);
+
+        } finally {
+            setIsResending(false);
+        }
     };
 
     return (
@@ -136,6 +158,18 @@ function VerifyEmail({ email, onBackToLogin, onResendEmail }) {
                         <AiOutlineCheckCircle size={24} style={{ color: '#2E7D32' }} />
                         <p className="text-sm font-medium" style={{ color: '#2E7D32' }}>
                             ¡Correo reenviado exitosamente!
+                        </p>
+                    </div>
+                )}
+
+                {/* Mensaje de error al reenviar */}
+                {resendError && (
+                    <div
+                        className="rounded-xl p-4 mb-6 animate-fade-in"
+                        style={{ backgroundColor: 'rgba(211, 47, 47, 0.1)', borderLeft: '4px solid #D32F2F' }}
+                    >
+                        <p className="text-sm font-medium" style={{ color: '#D32F2F' }}>
+                            {resendError}
                         </p>
                     </div>
                 )}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineMail, AiOutlineLock } from 'react-icons/ai';
 import authService from '../../services/authService';
+import { validateEmail, validatePassword, MAX_EMAIL_LENGTH, MAX_PASSWORD_LENGTH } from '../../utils/validators';
 
 function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
     const navigate = useNavigate();
@@ -18,6 +19,18 @@ function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+
+        // Limites de caracteres
+        const limits = {
+            email: MAX_EMAIL_LENGTH,
+            password: MAX_PASSWORD_LENGTH
+        };
+
+        // Si excede el límite, no actualizar
+        if (limits[name] && value.length > limits[name]) {
+            return;
+        }
+
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -39,13 +52,12 @@ function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
         const newErrors = {};
 
         // Validar email
-        if (!formData.email) {
-            newErrors.email = 'El correo electrónico es requerido';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'El correo electrónico no es válido';
+        const emailError = validateEmail(formData.email);
+        if (emailError) {
+            newErrors.email = emailError;
         }
 
-        // Validar password
+        // Validar password (solo requerida en login, no validamos complejidad)
         if (!formData.password) {
             newErrors.password = 'La contraseña es requerida';
         }
@@ -164,6 +176,7 @@ function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
                             value={formData.email}
                             onChange={handleInputChange}
                             placeholder="ejemplo@correo.com"
+                            maxLength={MAX_EMAIL_LENGTH}
                             disabled={isLoading}
                             className="w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
                             style={{
@@ -232,6 +245,7 @@ function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
                             value={formData.password}
                             onChange={handleInputChange}
                             placeholder="••••••••"
+                            maxLength={MAX_PASSWORD_LENGTH}
                             disabled={isLoading}
                             className="w-full px-5 py-4 pr-12 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
                             style={{

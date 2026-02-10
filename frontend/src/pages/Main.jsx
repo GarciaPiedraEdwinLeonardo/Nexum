@@ -115,7 +115,6 @@ function Main({ view = 'login' }) {
                     ) : currentView === 'verify-email' ? (
                         <VerifyEmail
                             email={userEmail || location.state?.email || 'tu@correo.com'}
-                            onBackToLogin={handleSwitchToLogin}
                             onResendEmail={handleResendEmail}
                         />
                     ) : null}

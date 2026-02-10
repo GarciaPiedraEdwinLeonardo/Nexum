@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineMail, AiOutlineLock, AiOutlineUser } from 'react-icons/ai';
+import authService from '../../services/authService';
+import { validateName, validateEmail, validatePassword, validateConfirmPassword, MAX_NAME_LENGTH, MAX_EMAIL_LENGTH, MAX_PASSWORD_LENGTH } from '../../utils/validators';
 
 function Register({ onSwitchToLogin, onRegisterSuccess }) {
     const [formData, setFormData] = useState({
@@ -12,27 +14,117 @@ function Register({ onSwitchToLogin, onRegisterSuccess }) {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isFormHovered, setIsFormHovered] = useState(false);
     const [activeField, setActiveField] = useState(null);
+    const [errors, setErrors] = useState({});
+    const [isLoading, setIsLoading] = useState(false);
+    const [apiError, setApiError] = useState('');
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+
+        // Limites de caracteres
+        const limits = {
+            name: MAX_NAME_LENGTH,
+            email: MAX_EMAIL_LENGTH,
+            password: MAX_PASSWORD_LENGTH,
+            confirmPassword: MAX_PASSWORD_LENGTH
+        };
+
+        // Si excede el límite, no actualizar
+        if (limits[name] && value.length > limits[name]) {
+            return;
+        }
+
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
+
+        // Limpiar error del campo cuando el usuario empieza a escribir
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+
+        // Limpiar error general de API
+        if (apiError) {
+            setApiError('');
+        }
     };
 
-    const handleSubmit = (e) => {
+    const validateForm = () => {
+        const newErrors = {};
+
+        // Validar nombre
+        const nameError = validateName(formData.name);
+        if (nameError) {
+            newErrors.name = nameError;
+        }
+
+        // Validar email
+        const emailError = validateEmail(formData.email);
+        if (emailError) {
+            newErrors.email = emailError;
+        }
+
+        // Validar password
+        const passwordError = validatePassword(formData.password);
+        if (passwordError) {
+            newErrors.password = passwordError;
+        }
+
+        // Validar confirmación de password
+        const confirmPasswordError = validateConfirmPassword(formData.password, formData.confirmPassword);
+        if (confirmPasswordError) {
+            newErrors.confirmPassword = confirmPasswordError;
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (formData.password !== formData.confirmPassword) {
-            alert('Las contraseñas no coinciden');
+
+        // Limpiar errores previos
+        setApiError('');
+
+        // Validar formulario
+        if (!validateForm()) {
             return;
         }
-        console.log('Register attempt:', formData);
 
-        // Lógica de registro
-        // Después de un registro exitoso, navegar a verificación de email
-        if (onRegisterSuccess) {
-            onRegisterSuccess(formData.email);
+        setIsLoading(true);
+
+        try {
+            // Llamar al servicio de registro
+            const response = await authService.register({
+                name: formData.name,
+                email: formData.email,
+                password: formData.password
+            });
+
+            console.log('Registro exitoso:', response);
+
+            // Navegar a pantalla de verificación de email
+            if (onRegisterSuccess) {
+                onRegisterSuccess(formData.email);
+            }
+
+        } catch (error) {
+            console.error('Error en registro:', error);
+
+            // Manejar diferentes tipos de errores
+            if (error.message === 'Network Error') {
+                setApiError('No se pudo conectar con el servidor. Verifica tu conexión.');
+            } else if (error.message) {
+                setApiError(error.message);
+            } else {
+                setApiError('Error al crear la cuenta. Por favor, intenta nuevamente.');
+            }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -63,6 +155,21 @@ function Register({ onSwitchToLogin, onRegisterSuccess }) {
                 </p>
             </div>
 
+            {/* Error general de la API */}
+            {apiError && (
+                <div
+                    className="mb-6 p-4 rounded-xl border-l-4"
+                    style={{
+                        backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                        borderColor: '#D32F2F'
+                    }}
+                >
+                    <p className="text-sm font-medium" style={{ color: '#D32F2F' }}>
+                        {apiError}
+                    </p>
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Nombre Completo */}
                 <div className="transition-all duration-200">
@@ -81,33 +188,40 @@ function Register({ onSwitchToLogin, onRegisterSuccess }) {
                             value={formData.name}
                             onChange={handleInputChange}
                             placeholder="Tu nombre completo"
-                            required
+                            maxLength={MAX_NAME_LENGTH}
+                            disabled={isLoading}
                             className="w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
                             style={{
-                                borderColor: '#E8E8E8',
+                                borderColor: errors.name ? '#D32F2F' : '#E8E8E8',
                                 color: '#2E2E2E',
-                                backgroundColor: '#FFFFFF',
-                                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)'
+                                backgroundColor: isLoading ? '#F5F5F5' : '#FFFFFF',
+                                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)',
+                                cursor: isLoading ? 'not-allowed' : 'text'
                             }}
                             onFocus={(e) => {
                                 setActiveField('name');
-                                e.target.style.borderColor = '#7A1E2D';
-                                e.target.style.boxShadow = '0 0 0 3px rgba(122, 30, 45, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.03)';
+                                e.target.style.borderColor = errors.name ? '#D32F2F' : '#7A1E2D';
+                                e.target.style.boxShadow = `0 0 0 3px ${errors.name ? 'rgba(211, 47, 47, 0.1)' : 'rgba(122, 30, 45, 0.1)'}, inset 0 1px 2px rgba(0, 0, 0, 0.03)`;
                             }}
                             onBlur={(e) => {
                                 setActiveField(null);
-                                e.target.style.borderColor = '#E8E8E8';
+                                e.target.style.borderColor = errors.name ? '#D32F2F' : '#E8E8E8';
                                 e.target.style.boxShadow = 'inset 0 1px 2px rgba(0, 0, 0, 0.03)';
                             }}
                         />
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200"
                             style={{
-                                color: activeField === 'name' ? '#7A1E2D' : '#666666',
+                                color: errors.name ? '#D32F2F' : (activeField === 'name' ? '#7A1E2D' : '#666666'),
                                 opacity: activeField === 'name' ? 1 : 0.8
                             }}>
                             <AiOutlineUser className="h-5 w-5" />
                         </div>
                     </div>
+                    {errors.name && (
+                        <p className="mt-2 text-sm" style={{ color: '#D32F2F' }}>
+                            {errors.name}
+                        </p>
+                    )}
                 </div>
 
                 {/* Email */}
@@ -127,33 +241,40 @@ function Register({ onSwitchToLogin, onRegisterSuccess }) {
                             value={formData.email}
                             onChange={handleInputChange}
                             placeholder="ejemplo@correo.com"
-                            required
+                            maxLength={MAX_EMAIL_LENGTH}
+                            disabled={isLoading}
                             className="w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
                             style={{
-                                borderColor: '#E8E8E8',
+                                borderColor: errors.email ? '#D32F2F' : '#E8E8E8',
                                 color: '#2E2E2E',
-                                backgroundColor: '#FFFFFF',
-                                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)'
+                                backgroundColor: isLoading ? '#F5F5F5' : '#FFFFFF',
+                                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)',
+                                cursor: isLoading ? 'not-allowed' : 'text'
                             }}
                             onFocus={(e) => {
                                 setActiveField('email');
-                                e.target.style.borderColor = '#7A1E2D';
-                                e.target.style.boxShadow = '0 0 0 3px rgba(122, 30, 45, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.03)';
+                                e.target.style.borderColor = errors.email ? '#D32F2F' : '#7A1E2D';
+                                e.target.style.boxShadow = `0 0 0 3px ${errors.email ? 'rgba(211, 47, 47, 0.1)' : 'rgba(122, 30, 45, 0.1)'}, inset 0 1px 2px rgba(0, 0, 0, 0.03)`;
                             }}
                             onBlur={(e) => {
                                 setActiveField(null);
-                                e.target.style.borderColor = '#E8E8E8';
+                                e.target.style.borderColor = errors.email ? '#D32F2F' : '#E8E8E8';
                                 e.target.style.boxShadow = 'inset 0 1px 2px rgba(0, 0, 0, 0.03)';
                             }}
                         />
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200"
                             style={{
-                                color: activeField === 'email' ? '#7A1E2D' : '#666666',
+                                color: errors.email ? '#D32F2F' : (activeField === 'email' ? '#7A1E2D' : '#666666'),
                                 opacity: activeField === 'email' ? 1 : 0.8
                             }}>
                             <AiOutlineMail className="h-5 w-5" />
                         </div>
                     </div>
+                    {errors.email && (
+                        <p className="mt-2 text-sm" style={{ color: '#D32F2F' }}>
+                            {errors.email}
+                        </p>
+                    )}
                 </div>
 
                 {/* Contraseña */}
@@ -173,29 +294,30 @@ function Register({ onSwitchToLogin, onRegisterSuccess }) {
                             value={formData.password}
                             onChange={handleInputChange}
                             placeholder="Mínimo 8 caracteres"
-                            required
-                            minLength={8}
+                            maxLength={MAX_PASSWORD_LENGTH}
+                            disabled={isLoading}
                             className="w-full px-5 py-4 pr-12 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
                             style={{
-                                borderColor: '#E8E8E8',
+                                borderColor: errors.password ? '#D32F2F' : '#E8E8E8',
                                 color: '#2E2E2E',
-                                backgroundColor: '#FFFFFF',
-                                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)'
+                                backgroundColor: isLoading ? '#F5F5F5' : '#FFFFFF',
+                                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)',
+                                cursor: isLoading ? 'not-allowed' : 'text'
                             }}
                             onFocus={(e) => {
                                 setActiveField('password');
-                                e.target.style.borderColor = '#7A1E2D';
-                                e.target.style.boxShadow = '0 0 0 3px rgba(122, 30, 45, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.03)';
+                                e.target.style.borderColor = errors.password ? '#D32F2F' : '#7A1E2D';
+                                e.target.style.boxShadow = `0 0 0 3px ${errors.password ? 'rgba(211, 47, 47, 0.1)' : 'rgba(122, 30, 45, 0.1)'}, inset 0 1px 2px rgba(0, 0, 0, 0.03)`;
                             }}
                             onBlur={(e) => {
                                 setActiveField(null);
-                                e.target.style.borderColor = '#E8E8E8';
+                                e.target.style.borderColor = errors.password ? '#D32F2F' : '#E8E8E8';
                                 e.target.style.boxShadow = 'inset 0 1px 2px rgba(0, 0, 0, 0.03)';
                             }}
                         />
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200"
                             style={{
-                                color: activeField === 'password' ? '#7A1E2D' : '#666666',
+                                color: errors.password ? '#D32F2F' : (activeField === 'password' ? '#7A1E2D' : '#666666'),
                                 opacity: activeField === 'password' ? 1 : 0.8
                             }}>
                             <AiOutlineLock className="h-5 w-5" />
@@ -203,8 +325,13 @@ function Register({ onSwitchToLogin, onRegisterSuccess }) {
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
+                            disabled={isLoading}
                             className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors duration-200 p-1 rounded-md hover:bg-gray-50"
-                            style={{ color: '#7A1E2D' }}
+                            style={{
+                                color: '#7A1E2D',
+                                cursor: isLoading ? 'not-allowed' : 'pointer',
+                                opacity: isLoading ? 0.5 : 1
+                            }}
                         >
                             {showPassword ? (
                                 <AiOutlineEyeInvisible size={20} />
@@ -213,6 +340,11 @@ function Register({ onSwitchToLogin, onRegisterSuccess }) {
                             )}
                         </button>
                     </div>
+                    {errors.password && (
+                        <p className="mt-2 text-sm" style={{ color: '#D32F2F' }}>
+                            {errors.password}
+                        </p>
+                    )}
                 </div>
 
                 {/* Confirmar Contraseña */}
@@ -232,28 +364,30 @@ function Register({ onSwitchToLogin, onRegisterSuccess }) {
                             value={formData.confirmPassword}
                             onChange={handleInputChange}
                             placeholder="Repite tu contraseña"
-                            required
+                            maxLength={MAX_PASSWORD_LENGTH}
+                            disabled={isLoading}
                             className="w-full px-5 py-4 pr-12 border-2 rounded-xl focus:outline-none transition-all duration-200 text-base pl-12"
                             style={{
-                                borderColor: '#E8E8E8',
+                                borderColor: errors.confirmPassword ? '#D32F2F' : '#E8E8E8',
                                 color: '#2E2E2E',
-                                backgroundColor: '#FFFFFF',
-                                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)'
+                                backgroundColor: isLoading ? '#F5F5F5' : '#FFFFFF',
+                                boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)',
+                                cursor: isLoading ? 'not-allowed' : 'text'
                             }}
                             onFocus={(e) => {
                                 setActiveField('confirmPassword');
-                                e.target.style.borderColor = '#7A1E2D';
-                                e.target.style.boxShadow = '0 0 0 3px rgba(122, 30, 45, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.03)';
+                                e.target.style.borderColor = errors.confirmPassword ? '#D32F2F' : '#7A1E2D';
+                                e.target.style.boxShadow = `0 0 0 3px ${errors.confirmPassword ? 'rgba(211, 47, 47, 0.1)' : 'rgba(122, 30, 45, 0.1)'}, inset 0 1px 2px rgba(0, 0, 0, 0.03)`;
                             }}
                             onBlur={(e) => {
                                 setActiveField(null);
-                                e.target.style.borderColor = '#E8E8E8';
+                                e.target.style.borderColor = errors.confirmPassword ? '#D32F2F' : '#E8E8E8';
                                 e.target.style.boxShadow = 'inset 0 1px 2px rgba(0, 0, 0, 0.03)';
                             }}
                         />
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-200"
                             style={{
-                                color: activeField === 'confirmPassword' ? '#7A1E2D' : '#666666',
+                                color: errors.confirmPassword ? '#D32F2F' : (activeField === 'confirmPassword' ? '#7A1E2D' : '#666666'),
                                 opacity: activeField === 'confirmPassword' ? 1 : 0.8
                             }}>
                             <AiOutlineLock className="h-5 w-5" />
@@ -261,8 +395,13 @@ function Register({ onSwitchToLogin, onRegisterSuccess }) {
                         <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            disabled={isLoading}
                             className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors duration-200 p-1 rounded-md hover:bg-gray-50"
-                            style={{ color: '#7A1E2D' }}
+                            style={{
+                                color: '#7A1E2D',
+                                cursor: isLoading ? 'not-allowed' : 'pointer',
+                                opacity: isLoading ? 0.5 : 1
+                            }}
                         >
                             {showConfirmPassword ? (
                                 <AiOutlineEyeInvisible size={20} />
@@ -271,28 +410,46 @@ function Register({ onSwitchToLogin, onRegisterSuccess }) {
                             )}
                         </button>
                     </div>
+                    {errors.confirmPassword && (
+                        <p className="mt-2 text-sm" style={{ color: '#D32F2F' }}>
+                            {errors.confirmPassword}
+                        </p>
+                    )}
                 </div>
 
                 <div className="pt-2">
                     <button
                         type="submit"
-                        className="w-full text-white font-semibold py-4 rounded-xl transition-all duration-300 text-base relative overflow-hidden"
+                        disabled={isLoading}
+                        className="w-full text-white font-semibold py-4 rounded-xl transition-all duration-300 text-base relative overflow-hidden flex items-center justify-center"
                         style={{
-                            backgroundColor: '#7A1E2D',
-                            boxShadow: '0 4px 12px rgba(122, 30, 45, 0.2)'
+                            backgroundColor: isLoading ? '#A0A0A0' : '#7A1E2D',
+                            boxShadow: '0 4px 12px rgba(122, 30, 45, 0.2)',
+                            cursor: isLoading ? 'not-allowed' : 'pointer'
                         }}
                         onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#621823';
-                            e.target.style.boxShadow = '0 6px 16px rgba(122, 30, 45, 0.3)';
-                            e.target.style.transform = 'translateY(-1px)';
+                            if (!isLoading) {
+                                e.target.style.backgroundColor = '#621823';
+                                e.target.style.boxShadow = '0 6px 16px rgba(122, 30, 45, 0.3)';
+                                e.target.style.transform = 'translateY(-1px)';
+                            }
                         }}
                         onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#7A1E2D';
-                            e.target.style.boxShadow = '0 4px 12px rgba(122, 30, 45, 0.2)';
-                            e.target.style.transform = 'translateY(0)';
+                            if (!isLoading) {
+                                e.target.style.backgroundColor = '#7A1E2D';
+                                e.target.style.boxShadow = '0 4px 12px rgba(122, 30, 45, 0.2)';
+                                e.target.style.transform = 'translateY(0)';
+                            }
                         }}
                     >
-                        Crear Cuenta
+                        {isLoading ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                Creando cuenta...
+                            </>
+                        ) : (
+                            'Crear Cuenta'
+                        )}
                     </button>
                 </div>
             </form>
@@ -303,18 +460,24 @@ function Register({ onSwitchToLogin, onRegisterSuccess }) {
                 </p>
                 <button
                     onClick={onSwitchToLogin}
+                    disabled={isLoading}
                     className="inline-flex items-center justify-center font-semibold transition-all duration-300 py-3 px-6 rounded-xl border"
                     style={{
-                        color: '#7A1E2D',
-                        borderColor: '#E8E8E8'
+                        color: isLoading ? 'rgba(122, 30, 45, 0.5)' : '#7A1E2D',
+                        borderColor: '#E8E8E8',
+                        cursor: isLoading ? 'not-allowed' : 'pointer'
                     }}
                     onMouseEnter={(e) => {
-                        e.target.style.borderColor = '#7A1E2D';
-                        e.target.style.color = '#621823';
+                        if (!isLoading) {
+                            e.target.style.borderColor = '#7A1E2D';
+                            e.target.style.color = '#621823';
+                        }
                     }}
                     onMouseLeave={(e) => {
-                        e.target.style.borderColor = '#E8E8E8';
-                        e.target.style.color = '#7A1E2D';
+                        if (!isLoading) {
+                            e.target.style.borderColor = '#E8E8E8';
+                            e.target.style.color = '#7A1E2D';
+                        }
                     }}
                 >
                     Inicia sesión aquí
