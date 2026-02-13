@@ -5,6 +5,7 @@ import EmailConfirmed from "./components/auth/EmailConfirmed";
 import ResetPassword from "./components/auth/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import authService from "./services/authService";
+import FormMain from "./pages/FormMain";
 
 function App() {
   // Función para redirigir usuarios autenticados
@@ -64,6 +65,15 @@ function App() {
           element={
             <RedirectIfAuthenticated>
               <Main view="verify-email" />
+            </RedirectIfAuthenticated>
+          }
+        />
+
+        <Route
+          path="/form"
+          element={
+            <RedirectIfAuthenticated>
+              <FormMain />
             </RedirectIfAuthenticated>
           }
         />
