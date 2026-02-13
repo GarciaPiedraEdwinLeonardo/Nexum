@@ -19,9 +19,9 @@ export const validateEmail = (email) => {
     if (!/\S+@\S+\.\S+/.test(email)) {
         return 'El correo electrónico no es válido';
     }
-    if (!email.endsWith('@alumno.ipn.mx')) {
-        return 'Solo se permiten correos institucionales (@alumno.ipn.mx)';
-    }
+    // if (!email.endsWith('@alumno.ipn.mx')) {
+    //     return 'Solo se permiten correos institucionales (@alumno.ipn.mx)';
+    // }
     return null;
 };
 

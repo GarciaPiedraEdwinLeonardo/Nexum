@@ -1,18 +1,65 @@
 const sgMail = require('@sendgrid/mail');
 require('dotenv').config();
 
-// Configurar API key de Brevo (usa SendGrid SDK ya que Brevo es compatible)
-// Alternativa: usar directamente fetch con la API de Brevo
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
+
+// IMPORTANTE: El email debe estar verificado en Brevo
+// Opcion 1: Tu email personal verificado en Brevo (recomendado para desarrollo)
+// Opcion 2: Email por defecto de Brevo (ej: tu-cuenta@brevo.sendinblue.com)
+// Opcion 3: Dominio personalizado verificado
 const EMAIL_FROM = {
-    email: process.env.EMAIL_FROM_ADDRESS || 'noreply@nexum.com',
-    name: process.env.EMAIL_FROM_NAME || 'Nexum Platform'
+    email: process.env.EMAIL_FROM_ADDRESS,
+    name: process.env.EMAIL_FROM_NAME
 };
 
-// Usar fetch nativo para Brevo API (más compatible)
-const sendEmail = async ({ to, subject, html, text }) => {
+// Límite diario de emails (300 en plan gratuito de Brevo)
+const DAILY_EMAIL_LIMIT = parseInt(process.env.DAILY_EMAIL_LIMIT);
+
+// Importar modelo de email logs (se importa después para evitar dependencia circular)
+let EmailLog;
+try {
+    EmailLog = require('../models/EmailLog');
+} catch (error) {
+    console.warn('⚠️ EmailLog model no disponible, límites desactivados');
+    EmailLog = null;
+}
+
+/**
+ * Verificar si se puede enviar un email (dentro del límite diario)
+ */
+const checkEmailLimit = async () => {
+    if (!EmailLog) {
+        // Si no hay modelo de logs, permitir envío (modo sin DB)
+        return { canSend: true, count: 0, limit: DAILY_EMAIL_LIMIT, remaining: DAILY_EMAIL_LIMIT };
+    }
+
+    return await EmailLog.canSendEmail();
+};
+
+/**
+ * Enviar email usando Brevo API
+ */
+const sendEmail = async ({ to, subject, html, text, emailType = 'generic' }) => {
     try {
-        // Brevo API v3
+        // 1. Verificar límite diario
+        const limitStatus = await checkEmailLimit();
+        
+        if (!limitStatus.canSend) {
+            const error = new Error('Límite diario de emails alcanzado');
+            error.code = 'DAILY_LIMIT_EXCEEDED';
+            error.limitInfo = limitStatus;
+            
+            console.error('❌ Límite de emails alcanzado:', limitStatus);
+            
+            // Registrar intento fallido
+            if (EmailLog) {
+                await EmailLog.log(to, emailType, false, 'Límite diario excedido');
+            }
+            
+            throw error;
+        }
+
+        // 2. Enviar email con Brevo API
         const response = await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: {
@@ -35,11 +82,29 @@ const sendEmail = async ({ to, subject, html, text }) => {
         }
 
         const result = await response.json();
-        console.log('✅ Email enviado exitosamente:', { to, messageId: result.messageId });
+        
+        // 3. Registrar email enviado exitosamente
+        if (EmailLog) {
+            await EmailLog.log(to, emailType, true);
+        }
+        
+        console.log('✅ Email enviado:', { 
+            to, 
+            type: emailType,
+            messageId: result.messageId,
+            remaining: limitStatus.remaining - 1
+        });
+        
         return result;
 
     } catch (error) {
         console.error('❌ Error al enviar email:', error);
+        
+        // Registrar error
+        if (EmailLog && error.code !== 'DAILY_LIMIT_EXCEEDED') {
+            await EmailLog.log(to, emailType, false, error.message);
+        }
+        
         throw error;
     }
 };
@@ -147,7 +212,8 @@ Si no creaste esta cuenta, ignora este correo.
         to: email,
         subject: '✅ Verifica tu cuenta de Nexum',
         html,
-        text
+        text,
+        emailType: 'verification'
     });
 };
 
@@ -260,7 +326,8 @@ Si no solicitaste este cambio, ignora este correo.
         to: email,
         subject: '🔒 Restablece tu contraseña de Nexum',
         html,
-        text
+        text,
+        emailType: 'password_reset'
     });
 };
 
@@ -271,12 +338,31 @@ const verifyEmailConfig = () => {
         return false;
     }
     console.log('✅ Configuración de email (Brevo) verificada');
+    console.log(`📊 Límite diario: ${DAILY_EMAIL_LIMIT} emails`);
     return true;
+};
+
+// Obtener estadísticas de uso de emails
+const getEmailStats = async () => {
+    if (!EmailLog) {
+        return { error: 'EmailLog model no disponible' };
+    }
+
+    const limitStatus = await checkEmailLimit();
+    const todayStats = await EmailLog.getTodayStats();
+    
+    return {
+        today: limitStatus,
+        breakdown: todayStats
+    };
 };
 
 module.exports = {
     sendEmail,
     sendVerificationEmail,
     sendPasswordResetEmail,
-    verifyEmailConfig
+    verifyEmailConfig,
+    checkEmailLimit,
+    getEmailStats,
+    DAILY_EMAIL_LIMIT
 };

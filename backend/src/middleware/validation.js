@@ -34,12 +34,12 @@ const validateRegister = [
         .notEmpty().withMessage('El email es requerido')
         .isEmail().withMessage('Debe ser un email válido')
         .isLength({ max: 60 }).withMessage('El email no puede tener más de 60 caracteres')
-        .custom((value) => {
-            if (!value.endsWith('@alumno.ipn.mx')) {
-                throw new Error('Solo se permiten correos institucionales (@alumno.ipn.mx)');
-            }
-            return true;
-        })
+        // .custom((value) => {
+        //     if (!value.endsWith('@alumno.ipn.mx')) {
+        //         throw new Error('Solo se permiten correos institucionales (@alumno.ipn.mx)');
+        //     }
+        //     return true;
+        // })
         .normalizeEmail(),
     
     body('password')

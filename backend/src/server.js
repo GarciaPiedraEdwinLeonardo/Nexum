@@ -12,6 +12,7 @@ const { verifyEmailConfig } = require('./config/email');
 
 // Importar rutas
 const authRoutes = require('./routes/auth');
+const emailAdminRoutes = require('./routes/emailAdmin')
 
 // Importar middlewares
 const { apiLimiter } = require('./middleware/rateLimiter');
@@ -80,6 +81,7 @@ app.get('/', (req, res) => {
 
 // Rutas de autenticación
 app.use('/api/auth', authRoutes);
+app.use('/api/admin/emails', emailAdminRoutes);
 
 // ============================================
 // MANEJO DE ERRORES
