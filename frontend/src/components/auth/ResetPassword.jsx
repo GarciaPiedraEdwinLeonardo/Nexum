@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineLock, AiOutlineCheckCircle, AiOutlineCloseCircle, AiOutlineLoading3Quarters } from 'react-icons/ai';
 import authService from '../../services/authService';
 import { validatePassword, validateConfirmPassword, MAX_PASSWORD_LENGTH } from '../../utils/validators';
 
 function ResetPassword() {
-    const { token } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const token = searchParams.get('token'); // Obtener token de query params
 
     const [formData, setFormData] = useState({
         password: '',
@@ -25,9 +26,14 @@ function ResetPassword() {
 
     // Verificar token al cargar el componente
     useEffect(() => {
+        console.log('🔍 Token recibido:', token);
+
         if (token) {
-            validateToken();
+            // Simplemente validar que existe, el backend verificará si es válido al hacer reset
+            console.log('✅ Token presente en URL');
+            setTokenStatus('valid');
         } else {
+            console.log('❌ No se encontró token en URL');
             setTokenStatus('invalid');
         }
     }, [token]);
@@ -43,14 +49,6 @@ function ResetPassword() {
             navigate('/login');
         }
     }, [resetStatus, countdown, navigate]);
-
-    const validateToken = async () => {
-        // Aquí puedes agregar una llamada al backend para validar el token
-        // Por ahora, simulamos que es válido
-        setTimeout(() => {
-            setTokenStatus('valid');
-        }, 1000);
-    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -116,18 +114,24 @@ function ResetPassword() {
         setApiError('');
 
         try {
+            console.log('🔄 Intentando resetear contraseña con token:', token?.substring(0, 20) + '...');
+
             // Llamar al servicio de reset password
             await authService.resetPassword(token, formData.password);
 
-            console.log('Contraseña restablecida exitosamente');
+            console.log('✅ Contraseña restablecida exitosamente');
             setResetStatus('success');
 
         } catch (error) {
-            console.error('Error al restablecer contraseña:', error);
+            console.error('❌ Error al restablecer contraseña:', error);
             setResetStatus('error');
 
             if (error.message === 'Network Error') {
                 setApiError('No se pudo conectar con el servidor');
+            } else if (error.message && error.message.includes('inválido')) {
+                setApiError('El enlace de recuperación es inválido o ha expirado. Por favor, solicita uno nuevo.');
+            } else if (error.message && error.message.includes('expirado')) {
+                setApiError('El enlace de recuperación ha expirado. Por favor, solicita uno nuevo.');
             } else {
                 setApiError(error.message || 'Error al restablecer la contraseña');
             }
@@ -177,7 +181,7 @@ function ResetPassword() {
                         Enlace Inválido
                     </h2>
                     <p className="text-base mb-8" style={{ color: 'rgba(46, 46, 46, 0.7)' }}>
-                        El enlace de recuperación es inválido o ha expirado
+                        El enlace de recuperación es inválido o no se encontró el token
                     </p>
 
                     <button
