@@ -36,9 +36,12 @@ const authService = {
             });
             
             // Guardar token y usuario en localStorage
-            if (response.data.token) {
-                localStorage.setItem('authToken', response.data.token);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+            if (response.data.data && response.data.data.token) {
+                localStorage.setItem('authToken', response.data.data.token);
+                localStorage.setItem('user', JSON.stringify(response.data.data.user));
+                
+                console.log('✅ Token guardado:', response.data.data.token.substring(0, 20) + '...');
+                console.log('✅ Usuario guardado:', response.data.data.user);
             }
             
             return response.data;
@@ -58,6 +61,8 @@ const authService = {
             // Limpiar localStorage
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
+            
+            console.log('✅ Sesión cerrada correctamente');
             
             return { success: true };
         } catch (error) {
@@ -79,9 +84,11 @@ const authService = {
             const response = await axiosInstance.post(`/auth/verify-email/${token}`);
             
             // Guardar token y usuario si viene en la respuesta
-            if (response.data.token) {
-                localStorage.setItem('authToken', response.data.token);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+            if (response.data.data && response.data.data.token) {
+                localStorage.setItem('authToken', response.data.data.token);
+                localStorage.setItem('user', JSON.stringify(response.data.data.user));
+                
+                console.log('✅ Email verificado y sesión iniciada');
             }
             
             return response.data;
@@ -148,8 +155,8 @@ const authService = {
             const response = await axiosInstance.get('/auth/profile');
             
             // Actualizar usuario en localStorage
-            if (response.data.user) {
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+            if (response.data.data && response.data.data.user) {
+                localStorage.setItem('user', JSON.stringify(response.data.data.user));
             }
             
             return response.data;
@@ -164,7 +171,15 @@ const authService = {
      */
     isAuthenticated: () => {
         const token = localStorage.getItem('authToken');
-        return !!token;
+        const hasToken = !!token;
+        
+        if (hasToken) {
+            console.log('🔐 Usuario autenticado - Token presente');
+        } else {
+            console.log('🔓 Usuario NO autenticado - Sin token');
+        }
+        
+        return hasToken;
     },
 
     /**
@@ -177,6 +192,7 @@ const authService = {
             try {
                 return JSON.parse(userStr);
             } catch (error) {
+                console.error('Error al parsear usuario:', error);
                 return null;
             }
         }

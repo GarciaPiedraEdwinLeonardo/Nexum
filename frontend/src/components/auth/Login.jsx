@@ -86,22 +86,35 @@ function Login({ onSwitchToRegister, onSwitchToForgotPassword }) {
                 password: formData.password
             });
 
-            console.log('Login exitoso:', response);
+            console.log('✅ Login exitoso:', response);
 
             // Verificar si el usuario necesita verificar su email
-            if (response.user && !response.user.verified) {
-                // Redirigir a pantalla de verificación
+            if (response.data && response.data.user && !response.data.user.isVerified) {
+                console.log('⚠️ Email no verificado, redirigiendo a verificación');
                 navigate('/verify-email', {
                     state: { email: formData.email }
                 });
                 return;
             }
 
-            // Si todo está bien, redirigir al dashboard
-            navigate('/dashboard');
+            // Verificar que el token se guardó correctamente
+            const savedToken = localStorage.getItem('authToken');
+            if (!savedToken) {
+                console.error('❌ Error: Token no se guardó en localStorage');
+                setApiError('Error al iniciar sesión. Por favor, intenta nuevamente.');
+                return;
+            }
+
+            console.log('✅ Token guardado correctamente, redirigiendo a dashboard...');
+
+            // Redirigir al dashboard
+            // Usamos setTimeout para asegurar que el estado se actualice antes de navegar
+            setTimeout(() => {
+                navigate('/dashboard', { replace: true });
+            }, 100);
 
         } catch (error) {
-            console.error('Error en login:', error);
+            console.error('❌ Error en login:', error);
 
             // Manejar diferentes tipos de errores
             if (error.message === 'Network Error') {
